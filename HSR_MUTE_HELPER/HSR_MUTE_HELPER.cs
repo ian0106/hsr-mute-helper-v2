@@ -44,6 +44,7 @@ public partial class HSR_MUTE_HELPER : Form
     this.ShowInTaskbar = false;
 
     this.audioMuter = new AudioMuter();
+    this.FormClosing += MainForm_FormClosing;
   }
 
   protected override CreateParams CreateParams
@@ -54,5 +55,10 @@ public partial class HSR_MUTE_HELPER : Form
       cp.ExStyle |= 0x80;
       return cp;
     }
+  }
+
+  private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+  {
+    this.audioMuter.Dispose();
   }
 }

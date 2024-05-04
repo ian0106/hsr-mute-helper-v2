@@ -9,6 +9,7 @@ public sealed class AudioMuter : IDisposable
 {
   private readonly NativeImports.WinEventDelegate winEventDelegate;
   private readonly IntPtr hookHandle;
+  private bool disposed;
 
   public AudioMuter()
 	{
@@ -98,11 +99,33 @@ public sealed class AudioMuter : IDisposable
 
 	public void Dispose()
   {
-    if (this.hookHandle == IntPtr.Zero)
+    if (this.disposed)
 		{
       return;
 		}
 
-    NativeImports.UnhookWinEvent(this.hookHandle);
+    this.disposed = true;
+
+    if (this.hookHandle != IntPtr.Zero)
+		{
+      NativeImports.UnhookWinEvent(this.hookHandle);
+    }
+
+    var audioSessions = this.GetLazyAudioSessions();
+
+    foreach (var targetName in Program.Settings.Program)
+    {
+      var targetProcesses = Process.GetProcessesByName(targetName);
+
+      foreach (var targetProcess in targetProcesses)
+      {
+        if (audioSessions.Value.TryGetValue(targetProcess.Id, out var audioSession) == false)
+        {
+          continue;
+        }
+
+        audioSession.SimpleAudioVolume.Mute = false;
+      }
+    }
   }
 }
