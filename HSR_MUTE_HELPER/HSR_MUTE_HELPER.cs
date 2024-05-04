@@ -20,13 +20,15 @@ public partial class HSR_MUTE_HELPER : Form
         {
           MessageBox.Show("setting.json 지정된 이름의 프로그램을 알텝하면 음소거해줘요", "HSR_MUTE_HELPER INFORMATION", MessageBoxButtons.OK, MessageBoxIcon.Information);
         })));
-    new MenuItem(
+
+    this.contextMenu.MenuItems.Add(
+      new MenuItem(
         "Exit",
         new EventHandler((sender, e) =>
         {
           notifyIcon.Visible = false;
           Application.Exit();
-        }));
+        })));
 
     this.notifyIcon = new NotifyIcon
     {
