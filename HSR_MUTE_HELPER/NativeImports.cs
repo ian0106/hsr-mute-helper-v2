@@ -7,7 +7,7 @@ using System.Text;
 public static class NativeImports
 {
   public const uint WINEVENT_OUTOFCONTEXT = 0;
-  public const int WINEVENT_SKIPOWNPROCESS = 2;
+  public const uint WINEVENT_SKIPOWNPROCESS = 2;
   public const uint EVENT_SYSTEM_FOREGROUND = 0x0003;
 
   public delegate void WinEventDelegate(

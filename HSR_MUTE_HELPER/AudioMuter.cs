@@ -9,7 +9,10 @@ public sealed class AudioMuter : IDisposable
 {
   private readonly NativeImports.WinEventDelegate winEventDelegate;
   private readonly IntPtr hookHandle;
+  private readonly object lockObject;
   private bool disposed;
+  private uint lastActivatedProcessorId;
+  private uint lastDwmsEventTime;
 
   public AudioMuter()
 	{
@@ -23,6 +26,7 @@ public sealed class AudioMuter : IDisposable
       0,
       NativeImports.WINEVENT_OUTOFCONTEXT | NativeImports.WINEVENT_SKIPOWNPROCESS);
 
+    this.lockObject = new object();
     this.Refresh();
   }
 
@@ -35,13 +39,16 @@ public sealed class AudioMuter : IDisposable
     uint dwEventThread,
     uint dwmsEventTime)
   {
-    var result = NativeImports.GetWindowThreadProcessId(hwnd, out var activatedProcessId);
-    if (result == 0)
+    lock (this.lockObject)
 		{
-      return;
-		}
+      if (dwmsEventTime <= this.lastDwmsEventTime)
+      {
+        return;
+      }
 
-    this.OnActivated((int)activatedProcessId);
+      this.Refresh();
+      this.lastDwmsEventTime = dwmsEventTime;
+    }
   }
 
   private void Refresh()
@@ -53,12 +60,19 @@ public sealed class AudioMuter : IDisposable
       return;
     }
 
+    if (this.lastActivatedProcessorId == activatedProcessId)
+		{
+      return;
+		}
+    
     this.OnActivated((int)activatedProcessId);
+    this.lastActivatedProcessorId = activatedProcessId;
   }
 
   private void OnActivated(int activatedProcessId)
 	{
     var audioSessions = this.GetLazyAudioSessions();
+    var now = DateTime.Now;
 
     foreach (var targetName in Program.Settings.Program)
     {
